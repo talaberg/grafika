@@ -1,0 +1,2 @@
+# grafika
+Grafika gyakorlás
