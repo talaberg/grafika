@@ -1,3 +1,6 @@
+#ifndef __FRAMEWORK_H__
+#define __FRAMEWORK_H__
+
 //=============================================================================================
 // Szamitogepes grafika hazi feladat keret. Ervenyes 2018-tol.
 // TILOS megvaltoztatni
@@ -76,6 +79,8 @@ struct vec3 {
 		return vec3(x - v.x, y - v.y, z - v.z);
 	}
 	vec3 operator*(const vec3& v) const { return vec3(x * v.x, y * v.y, z * v.z); }
+
+	vec3 operator/(const float t) const { return vec3(x / t, y / t, z / t); }
 
 	vec3 operator-()  const {
 		return vec3(-x, -y, -z);
@@ -305,3 +310,5 @@ public:
 
 	~GPUProgram() { glDeleteProgram(shaderProgramId); }
 };
+
+#endif

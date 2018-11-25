@@ -1,4 +1,5 @@
 #include "framework.h"
+#include "mymath.h"
 
 // vertex shader in GLSL: It is a Raw string (C++11) since it contains new line characters
 const char * const vertexSource = R"(
@@ -28,6 +29,65 @@ const char * const fragmentSource = R"(
 
 GPUProgram gpuProgram; // vertex and fragment shaders
 unsigned int vao;	   // virtual world on the GPU
+
+class Track
+{
+	CatmullRom curve;
+	vector<float> vertexCoords;
+public:
+	void Addpoint(float x, float y)
+	{
+		curve.AddControlPoint(vec3(x, y, 0), (float)(curve.cps.size() + 1));
+	}
+
+	void Create()
+	{
+		glGenVertexArrays(1, &vao);	// create 1 vertex array object
+		glBindVertexArray(vao);		// make it active
+
+		unsigned int vbo[2];		// vertex buffer objects
+		glGenBuffers(2, &vbo[0]);	// Generate 2 vertex buffer objects
+
+		// vertex coordinates: vbo[0] -> Attrib Array 0 -> vertexPosition of the vertex shader
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]); // make it active, it is an array
+		vertexCoords.resize(curve.cps.size() * 4 * 2);	// vertex data on the CPU
+
+		Draw(vertexCoords);
+
+
+		glBufferData(GL_ARRAY_BUFFER,      // copy to the GPU
+			vertexCoords.size(), // number of the vbo in bytes
+			vertexCoords.data(),		   // address of the data array on the CPU
+			GL_STATIC_DRAW);	   // copy to that part of the memory which is not modified 
+		// Map Attribute Array 0 to the current bound vertex buffer (vbo[0])
+		glEnableVertexAttribArray(0);
+		// Data organization of Attribute Array 0 
+		glVertexAttribPointer(0,			// Attribute Array 0
+			2, GL_FLOAT,  // components/attribute, component type
+			GL_FALSE,		// not in fixed point format, do not normalized
+			0, NULL);     // stride and offset: it is tightly packed
+
+		// Texture
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // make it active, it is an array
+	}
+
+	void Draw(vector<float> & vertexCoords)
+	{
+		const float step = 0.25f;
+		float t = 0;
+		for (unsigned i = 0; i < curve.cps.size() * 4; i++)
+		{
+			vec3 r = curve.r(t);
+			vertexCoords[2 * i] = r.x;
+			vertexCoords[2 * i + 1] = r.y;
+			t += step;
+		}
+	}
+
+
+};
+
+Track track;
 
 // Initialization, create an OpenGL context
 void onInitialization() {
@@ -112,9 +172,14 @@ void onMouse(int button, int state, int pX, int pY) { // pX, pY are the pixel co
 	case GLUT_MIDDLE_BUTTON: printf("Middle button %s at (%3.2f, %3.2f)\n", buttonStat, cX, cY); break;
 	case GLUT_RIGHT_BUTTON:  printf("Right button %s at (%3.2f, %3.2f)\n", buttonStat, cX, cY);  break;
 	}
+
+	track.Addpoint(cX, cY);
 }
 
 // Idle event indicating that some time elapsed: do animation here
 void onIdle() {
 	long time = glutGet(GLUT_ELAPSED_TIME); // elapsed time since the start of the program
+
+	float sec = time / 1000.0f;				// convert msec to sec
+
 }
