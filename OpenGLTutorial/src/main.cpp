@@ -22,6 +22,8 @@ unsigned int shader;
 int u_Color_location;
 float r = 0.0f;
 
+VertexBuffer* vb;
+IndexBuffer* ib;
 
 struct ShaderProgramSource
 {
@@ -65,23 +67,23 @@ static ShaderProgramSource ParseShader(const std::string filePath)
 
 static unsigned int CompileShader(unsigned int type, const std::string& source)
 {
-	unsigned int id = glCreateShader(type);
+	GLCALL(unsigned int id = glCreateShader(type));
 	const char* src = source.c_str();
-	glShaderSource(id, 1, &src, nullptr);
-	glCompileShader(id);
-	
+	GLCALL(glShaderSource(id, 1, &src, nullptr));
+	GLCALL(glCompileShader(id));
+
 	int result;
-	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+	GLCALL(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
 
 	if (result == GL_FALSE)
 	{
 		int length;
-		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+		GLCALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
 		char * message = (char*)alloca(length * sizeof(char));
-		glGetShaderInfoLog(id, length, &length, message);
+		GLCALL(glGetShaderInfoLog(id, length, &length, message));
 		std::cout << "Failed to compile" << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
 		std::cout << message << std::endl;
-		glDeleteShader(id);
+		GLCALL(glDeleteShader(id));
 		return 0;
 	}
 
@@ -90,18 +92,18 @@ static unsigned int CompileShader(unsigned int type, const std::string& source)
 
 static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
 {
-	unsigned int program = glCreateProgram();
+	GLCALL(unsigned int program = glCreateProgram());
 	unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
 	unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
 
-	glAttachShader(program, vs);
-	glAttachShader(program, fs);
-	glLinkProgram(program);
-	glValidateProgram(program);
+	GLCALL(glAttachShader(program, vs));
+	GLCALL(glAttachShader(program, fs));
+	GLCALL(glLinkProgram(program));
+	GLCALL(glValidateProgram(program));
 
-	glDeleteShader(vs);
-	glDeleteShader(fs);
-	 
+	GLCALL(glDeleteShader(vs));
+	GLCALL(glDeleteShader(fs));
+
 	return program;
 }
 
@@ -113,7 +115,7 @@ void onInitialize(void)
 		std::cout << "Error!" << std::endl;
 	}
 
-	std::cout << glGetString(GL_VERSION) << std::endl;
+	GLCALL(std::cout << glGetString(GL_VERSION) << std::endl;)
 
 	float positions[] = {
 		-0.5f, -0.5f,
@@ -126,48 +128,44 @@ void onInitialize(void)
 		2, 3, 0
 	};
 
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-	
-	// Generate a buffer
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
-	// Specify vertex attribute
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, 0);
+	GLCALL(glGenVertexArrays(1, &vao));
+	GLCALL(glBindVertexArray(vao));
 
-	// Generate an index buffer
-	glGenBuffers(1, &ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+	vb = new VertexBuffer(positions, 4 * 2 * sizeof(float));
+
+	// Specify vertex attribute
+	GLCALL(glEnableVertexAttribArray(0));
+	GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, 0));
+
+	ib = new IndexBuffer(indices, 6);
+
 	// Specify vertex attribute
 	ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 	shader = CreateShader(source.VertexSource, source.FragmentSource);
-	glUseProgram(shader);
+	GLCALL(glUseProgram(shader));
 
-	u_Color_location = glGetUniformLocation(shader, "u_Color");
+	GLCALL(u_Color_location = glGetUniformLocation(shader, "u_Color"));
 	ASSERT(u_Color_location != -1);
-	glUniform4f(u_Color_location, r, 0.3f, 0.8f, 1.0f);
+	GLCALL(glUniform4f(u_Color_location, r, 0.3f, 0.8f, 1.0f));
 
-	glBindVertexArray(0);
-	glUseProgram(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	GLCALL(glBindVertexArray(0));
+	GLCALL(glUseProgram(0));
+	GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+	GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
 void onDisplay(void)
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	GLCALL(glClear(GL_COLOR_BUFFER_BIT));
 
-	glUseProgram(shader);
-	glUniform4f(u_Color_location, r, 0.3f, 0.8f, 1.0f);
+	GLCALL(glUseProgram(shader));
+	GLCALL(glUniform4f(u_Color_location, r, 0.3f, 0.8f, 1.0f));
 
-	glBindVertexArray(vao);
+	GLCALL(glBindVertexArray(vao));
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	ib->Bind();
 
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+	GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
 
 	glutSwapBuffers(); // exchange buffers for double buffering
@@ -197,12 +195,12 @@ void onIdle()
 		dt = 0;
 		glutPostRedisplay();					// redraw the scene
 	}
-	
+
 }
 
 int main(int argc, char** argv)
 {
-	
+
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE);
@@ -216,6 +214,8 @@ int main(int argc, char** argv)
 	glutDisplayFunc(onDisplay);
 	glutMainLoop();
 
+	delete vb;
+	delete ib;
 	glDeleteProgram(shader);
 
 	return 0;
