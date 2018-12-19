@@ -45,7 +45,6 @@ public:
 		static_assert(false);
 	}
 
-
 	template<>
 	void Push<float>(unsigned int count)
 	{
