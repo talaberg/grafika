@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "VertexArray.h"
 
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -22,6 +23,7 @@ unsigned int shader;
 int u_Color_location;
 float r = 0.0f;
 
+VertexArray* va;
 VertexBuffer* vb;
 IndexBuffer* ib;
 
@@ -131,11 +133,12 @@ void onInitialize(void)
 	GLCALL(glGenVertexArrays(1, &vao));
 	GLCALL(glBindVertexArray(vao));
 
+	va = new VertexArray();
 	vb = new VertexBuffer(positions, 4 * 2 * sizeof(float));
 
-	// Specify vertex attribute
-	GLCALL(glEnableVertexAttribArray(0));
-	GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 2, 0));
+	VertexBufferLayout layout;
+	layout.Push<float>(2);
+	va->AddBuffer(*vb, layout);
 
 	ib = new IndexBuffer(indices, 6);
 
@@ -161,17 +164,12 @@ void onDisplay(void)
 	GLCALL(glUseProgram(shader));
 	GLCALL(glUniform4f(u_Color_location, r, 0.3f, 0.8f, 1.0f));
 
-	GLCALL(glBindVertexArray(vao));
-
+	va->Bind();
 	ib->Bind();
 
 	GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
-
 	glutSwapBuffers(); // exchange buffers for double buffering
-
-
-
 }
 
 void onIdle()
@@ -214,8 +212,9 @@ int main(int argc, char** argv)
 	glutDisplayFunc(onDisplay);
 	glutMainLoop();
 
-	delete vb;
 	delete ib;
+	delete vb;
+	delete va;
 	glDeleteProgram(shader);
 
 	return 0;
