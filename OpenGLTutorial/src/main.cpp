@@ -2,6 +2,7 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
+#include "VertexBufferLayout.h"
 #include "Shader.h"
 
 #include <GL/glew.h>
@@ -20,6 +21,7 @@ int windowWidth  = 600;
 int u_Color_location;
 float r = 0.0f;
 
+Renderer * renderer;
 Shader* shader;
 VertexArray* va;
 VertexBuffer* vb;
@@ -55,19 +57,18 @@ void onInitialize(void)
 	ib = new IndexBuffer(indices, 6);
 
 	shader = new Shader("res/shaders/Basic.shader");
+
+	renderer = new Renderer();
 }
 
 void onDisplay(void)
 {
-	GLCALL(glClear(GL_COLOR_BUFFER_BIT));
+	renderer->Clear();
 
 	shader->Bind();
 	shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
 
-	va->Bind();
-	ib->Bind();
-
-	GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+	renderer->Draw(*va, *ib, *shader);
 
 	glutSwapBuffers(); // exchange buffers for double buffering
 }
@@ -116,6 +117,7 @@ int main(int argc, char** argv)
 	delete vb;
 	delete va;
 	delete shader;
+	delete renderer;
 
 	return 0;
 }
