@@ -4,6 +4,7 @@
 #include "VertexArray.h"
 #include "VertexBufferLayout.h"
 #include "Shader.h"
+#include "Texture.h"
 
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -13,12 +14,11 @@
 #include <string>
 #include <sstream>
 
-// http://docs.gl/
+// OpenGL documentation: http://docs.gl/
 
 int windowHeight = 600;
 int windowWidth  = 600;
 
-int u_Color_location;
 float r = 0.0f;
 
 Renderer * renderer;
@@ -26,74 +26,93 @@ Shader* shader;
 VertexArray* va;
 VertexBuffer* vb;
 IndexBuffer* ib;
+Texture* texture;
 
 void onInitialize(void)
 {
-	if (glewInit() != GLEW_OK)
-	{
-		std::cout << "Error!" << std::endl;
-	}
+    if (glewInit() != GLEW_OK)
+    {
+        std::cout << "Error!" << std::endl;
+    }
 
-	GLCALL(std::cout << glGetString(GL_VERSION) << std::endl;)
+    GLCALL(std::cout << glGetString(GL_VERSION) << std::endl;)
 
-	float positions[] = {
-		-0.5f, -0.5f,
-		 0.5f, -0.5f,
-		 0.5f,  0.5f,
-		-0.5f,  0.5f,
-	};
-	unsigned int indices[] = {
-		0, 1, 2,
-		2, 3, 0
-	};
+    float positions[] = {
+        -0.5f, -0.5f, 0.0f, 0.0f,
+         0.5f, -0.5f, 1.0f, 0.0f,
+         0.5f,  0.5f, 1.0f, 1.0f,
+        -0.5f,  0.5f, 0.0f, 1.0f
+    };
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
 
-	va = new VertexArray();
-	vb = new VertexBuffer(positions, 4 * 2 * sizeof(float));
+    GLCALL(glEnable(GL_BLEND));
+    GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-	VertexBufferLayout layout;
-	layout.Push<float>(2);
-	va->AddBuffer(*vb, layout);
+    va = new VertexArray();
+    vb = new VertexBuffer(positions, 4 * 4 * sizeof(float));
 
-	ib = new IndexBuffer(indices, 6);
+    VertexBufferLayout layout;
+    layout.Push<float>(2);
+    layout.Push<float>(2);
 
-	shader = new Shader("res/shaders/Basic.shader");
+    va->AddBuffer(*vb, layout);
 
-	renderer = new Renderer();
+    ib = new IndexBuffer(indices, 6);
+
+    texture = new Texture("res/textures/chutulu.png");
+    texture->Bind(0);
+
+    shader = new Shader("res/shaders/Basic.shader");
+    shader->Bind();
+    shader->SetUniform1i("u_Texture", 0);
+
+
+
+    va->Unbind();
+    vb->Unbind();
+    ib->Unbind();
+    shader->Unbind();
+
+    renderer = new Renderer();
+
 }
 
 void onDisplay(void)
 {
-	renderer->Clear();
+    renderer->Clear();
 
-	shader->Bind();
-	shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
+    shader->Bind();
+    shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
 
-	renderer->Draw(*va, *ib, *shader);
+    renderer->Draw(*va, *ib, *shader);
 
-	glutSwapBuffers(); // exchange buffers for double buffering
+    glutSwapBuffers(); // exchange buffers for double buffering
 }
 
 void onIdle()
 {
-	static long last_time = 0;
-	static long dt = 0;
-	long time = glutGet(GLUT_ELAPSED_TIME); // elapsed time since the start of the program
-	dt += time - last_time;
-	last_time = time;
+    static long last_time = 0;
+    static long dt = 0;
+    long time = glutGet(GLUT_ELAPSED_TIME); // elapsed time since the start of the program
+    dt += time - last_time;
+    last_time = time;
 
-	if (dt > 100)
-	{
-		static float increment = 0.05f;
-		if (r > 1.0f)
-			increment = -0.05f;
-		else if (r < 0.0f)
-			increment = 0.05f;
+    if (dt > 100)
+    {
+        static float increment = 0.05f;
+        if (r > 1.0f)
+            increment = -0.05f;
+        else if (r < 0.0f)
+            increment = 0.05f;
 
-		r += increment;
+        r += increment;
 
-		dt = 0;
-		glutPostRedisplay();					// redraw the scene
-	}
+        dt = 0;
+        glutPostRedisplay();                    // redraw the scene
+    }
 
 }
 
@@ -101,23 +120,24 @@ int main(int argc, char** argv)
 {
 
 
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE);
-	glutInitWindowSize(windowHeight, windowWidth);
-	glutInitWindowPosition(100, 100);
-	glutCreateWindow("OpenGL Tutorial");
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE);
+    glutInitWindowSize(windowHeight, windowWidth);
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("OpenGL Tutorial");
 
-	onInitialize();
+    onInitialize();
 
-	glutIdleFunc(onIdle);
-	glutDisplayFunc(onDisplay);
-	glutMainLoop();
+    glutIdleFunc(onIdle);
+    glutDisplayFunc(onDisplay);
+    glutMainLoop();
 
-	delete ib;
-	delete vb;
-	delete va;
-	delete shader;
-	delete renderer;
+    delete ib;
+    delete vb;
+    delete va;
+    delete shader;
+    delete renderer;
+    delete texture;
 
-	return 0;
+    return 0;
 }
