@@ -8,6 +8,8 @@
 
 #include <GL/glew.h>
 #include <GL/glut.h>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -27,6 +29,7 @@ VertexArray* va;
 VertexBuffer* vb;
 IndexBuffer* ib;
 Texture* texture;
+glm::mat4 proj;
 
 void onInitialize(void)
 {
@@ -69,7 +72,7 @@ void onInitialize(void)
     shader->Bind();
     shader->SetUniform1i("u_Texture", 0);
 
-
+    proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
 
     va->Unbind();
     vb->Unbind();
@@ -86,6 +89,7 @@ void onDisplay(void)
 
     shader->Bind();
     shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
+    shader->SetUniformMat4f("u_MVP", proj);
 
     renderer->Draw(*va, *ib, *shader);
 
