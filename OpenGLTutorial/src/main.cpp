@@ -29,7 +29,7 @@ VertexArray* va;
 VertexBuffer* vb;
 IndexBuffer* ib;
 Texture* texture;
-glm::mat4 proj;
+glm::mat4 MVP;
 
 void onInitialize(void)
 {
@@ -41,10 +41,10 @@ void onInitialize(void)
     GLCALL(std::cout << glGetString(GL_VERSION) << std::endl;)
 
     float positions[] = {
-        -0.5f, -0.5f, 0.0f, 0.0f,
-         0.5f, -0.5f, 1.0f, 0.0f,
-         0.5f,  0.5f, 1.0f, 1.0f,
-        -0.5f,  0.5f, 0.0f, 1.0f
+        100.0f, 100.0f, 0.0f, 0.0f,
+        200.0f, 100.0f, 1.0f, 0.0f,
+        200.0f, 200.0f, 1.0f, 1.0f,
+        100.0f, 200.0f, 0.0f, 1.0f
     };
     unsigned int indices[] = {
         0, 1, 2,
@@ -72,7 +72,10 @@ void onInitialize(void)
     shader->Bind();
     shader->SetUniform1i("u_Texture", 0);
 
-    proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
+    glm::mat4 proj = glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f);
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0 ,0));
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200, 200, 0));;
+    MVP = proj * view * model;
 
     va->Unbind();
     vb->Unbind();
@@ -89,7 +92,7 @@ void onDisplay(void)
 
     shader->Bind();
     shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
-    shader->SetUniformMat4f("u_MVP", proj);
+    shader->SetUniformMat4f("u_MVP", MVP);
 
     renderer->Draw(*va, *ib, *shader);
 
