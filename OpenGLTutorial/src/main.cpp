@@ -8,6 +8,11 @@
 
 #include <GL/glew.h>
 #include <GL/glut.h>
+
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_freeglut.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -18,8 +23,8 @@
 
 // OpenGL documentation: http://docs.gl/
 
-int windowHeight = 600;
-int windowWidth  = 600;
+int windowWidth = 1280;
+int windowHeight = 720;
 
 float r = 0.0f;
 
@@ -30,6 +35,9 @@ VertexBuffer* vb;
 IndexBuffer* ib;
 Texture* texture;
 glm::mat4 MVP;
+glm::mat4 proj;
+glm::mat4 view;
+glm::vec3 translation;
 
 void onInitialize(void)
 {
@@ -72,10 +80,10 @@ void onInitialize(void)
     shader->Bind();
     shader->SetUniform1i("u_Texture", 0);
 
-    glm::mat4 proj = glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f);
-    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0 ,0));
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200, 200, 0));;
-    MVP = proj * view * model;
+    translation = glm::vec3(200, 200, 0);
+
+    proj = glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f);
+    view = glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0 ,0));
 
     va->Unbind();
     vb->Unbind();
@@ -86,17 +94,44 @@ void onInitialize(void)
 
 }
 
+void imgui_display_code()
+{
+    static float f = 0.0f;
+    ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 960.0f);
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+}
+
 void onDisplay(void)
 {
     renderer->Clear();
+
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplFreeGLUT_NewFrame();
+
+    imgui_display_code();
+
+    // Rendering
+    ImGui::Render();
+    ImGuiIO& io = ImGui::GetIO();
+    glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
+
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
+    MVP = proj * view * model;
 
     shader->Bind();
     shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
     shader->SetUniformMat4f("u_MVP", MVP);
 
     renderer->Draw(*va, *ib, *shader);
+    shader->Unbind();
+
+    glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code.
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     glutSwapBuffers(); // exchange buffers for double buffering
+    glutPostRedisplay();
+
 }
 
 void onIdle()
@@ -125,11 +160,11 @@ void onIdle()
 
 int main(int argc, char** argv)
 {
-
-
+    // Create GLUT window
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE);
-    glutInitWindowSize(windowHeight, windowWidth);
+    //glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE);
+    glutInitWindowSize(windowWidth, windowHeight);
     glutInitWindowPosition(100, 100);
     glutCreateWindow("OpenGL Tutorial");
 
@@ -137,7 +172,27 @@ int main(int argc, char** argv)
 
     glutIdleFunc(onIdle);
     glutDisplayFunc(onDisplay);
+
+    // Setup Dear ImGui context
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+
+    // Setup Platform/Renderer bindings
+    ImGui_ImplFreeGLUT_Init();
+    ImGui_ImplFreeGLUT_InstallFuncs();
+    ImGui_ImplOpenGL3_Init();
+
+    // Setup Style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
     glutMainLoop();
+
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplFreeGLUT_Shutdown();
+    ImGui::DestroyContext();
 
     delete ib;
     delete vb;
