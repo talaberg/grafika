@@ -37,7 +37,8 @@ Texture* texture;
 glm::mat4 MVP;
 glm::mat4 proj;
 glm::mat4 view;
-glm::vec3 translation;
+glm::vec3 translationA;
+glm::vec3 translationB;
 
 void onInitialize(void)
 {
@@ -49,10 +50,10 @@ void onInitialize(void)
     GLCALL(std::cout << glGetString(GL_VERSION) << std::endl;)
 
     float positions[] = {
-        100.0f, 100.0f, 0.0f, 0.0f,
-        200.0f, 100.0f, 1.0f, 0.0f,
-        200.0f, 200.0f, 1.0f, 1.0f,
-        100.0f, 200.0f, 0.0f, 1.0f
+        -50.0f, -50.0f, 0.0f, 0.0f,
+         50.0f, -50.0f, 1.0f, 0.0f,
+         50.0f,  50.0f, 1.0f, 1.0f,
+        -50.0f,  50.0f, 0.0f, 1.0f
     };
     unsigned int indices[] = {
         0, 1, 2,
@@ -80,10 +81,11 @@ void onInitialize(void)
     shader->Bind();
     shader->SetUniform1i("u_Texture", 0);
 
-    translation = glm::vec3(200, 200, 0);
+    translationA = glm::vec3(200, 200, 0);
+    translationB = glm::vec3(400, 200, 0);
 
     proj = glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f);
-    view = glm::translate(glm::mat4(1.0f), glm::vec3(-100, 0 ,0));
+    view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0 ,0));
 
     va->Unbind();
     vb->Unbind();
@@ -97,7 +99,8 @@ void onInitialize(void)
 void imgui_display_code()
 {
     static float f = 0.0f;
-    ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 960.0f);
+    ImGui::SliderFloat3("Translation A", &translationA.x, 0.0f, 960.0f);
+    ImGui::SliderFloat3("Translation B", &translationB.x, 0.0f, 960.0f);
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 }
 
@@ -116,14 +119,20 @@ void onDisplay(void)
     ImGuiIO& io = ImGui::GetIO();
     glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
-    MVP = proj * view * model;
-
-    shader->Bind();
-    shader->SetUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
-    shader->SetUniformMat4f("u_MVP", MVP);
-
-    renderer->Draw(*va, *ib, *shader);
+    {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
+        MVP = proj * view * model;
+        shader->Bind();
+        shader->SetUniformMat4f("u_MVP", MVP);
+        renderer->Draw(*va, *ib, *shader);
+    }
+    {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
+        MVP = proj * view * model;
+        shader->Bind();
+        shader->SetUniformMat4f("u_MVP", MVP);
+        renderer->Draw(*va, *ib, *shader);
+    }
     shader->Unbind();
 
     glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code.
