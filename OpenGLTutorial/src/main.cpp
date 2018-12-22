@@ -42,7 +42,8 @@ glm::mat4 view;
 glm::vec3 translationA;
 glm::vec3 translationB;
 
-test::TestClearColor clearcolor_test;
+test::Test* currentTest;
+test::TestMenu* testMenu;
 
 void onInitialize(void)
 {
@@ -56,6 +57,11 @@ void onInitialize(void)
     GLCALL(glEnable(GL_BLEND));
     GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
+    currentTest = nullptr;
+    testMenu = new test::TestMenu(currentTest);
+    currentTest = testMenu;
+
+    testMenu->RegisterTest<test::TestClearColor>("Clear Color");
 
     renderer = new Renderer();
 
@@ -73,14 +79,26 @@ void onDisplay(void)
 {
     renderer->Clear();
 
-    clearcolor_test.OnUpdate(0.0f);
-    clearcolor_test.OnRender();
-
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplFreeGLUT_NewFrame();
 
-    clearcolor_test.OnImGuiRender();
+    if (currentTest)
+    {
+        ImGui::Begin("Test");
+
+        currentTest->OnUpdate(0.0f);
+        currentTest->OnRender();
+        if (currentTest != testMenu && ImGui::Button("<-"))
+        {
+            delete currentTest;
+            currentTest = testMenu;
+        }
+
+        currentTest->OnImGuiRender();
+        ImGui::End();
+    }
+
     imgui_display_code();
 
     // Rendering
@@ -142,6 +160,11 @@ int main(int argc, char** argv)
     delete shader;
     delete renderer;
     delete texture;
+    delete currentTest;
+    if (currentTest != testMenu)
+    {
+        delete testMenu;
+    }
 
     return 0;
 }
