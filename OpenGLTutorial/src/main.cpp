@@ -7,6 +7,7 @@
 #include "Texture.h"
 
 #include "tests/TestClearColor.h"
+#include "tests/TestTexture2D.h"
 
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -24,26 +25,13 @@
 #include <sstream>
 
 // OpenGL documentation: http://docs.gl/
-
 int windowWidth = 1280;
 int windowHeight = 720;
 
-float r = 0.0f;
-
-Renderer * renderer;
-Shader* shader;
-VertexArray* va;
-VertexBuffer* vb;
-IndexBuffer* ib;
-Texture* texture;
-glm::mat4 MVP;
-glm::mat4 proj;
-glm::mat4 view;
-glm::vec3 translationA;
-glm::vec3 translationB;
-
 test::Test* currentTest;
 test::TestMenu* testMenu;
+
+Renderer renderer;
 
 void onInitialize(void)
 {
@@ -54,7 +42,6 @@ void onInitialize(void)
 
     GLCALL(std::cout << glGetString(GL_VERSION) << std::endl;)
 
-    GLCALL(glEnable(GL_BLEND));
     GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
     currentTest = nullptr;
@@ -62,22 +49,12 @@ void onInitialize(void)
     currentTest = testMenu;
 
     testMenu->RegisterTest<test::TestClearColor>("Clear Color");
-
-    renderer = new Renderer();
-
-}
-
-void imgui_display_code()
-{
-    static float f = 0.0f;
-    ImGui::SliderFloat3("Translation A", &translationA.x, 0.0f, 960.0f);
-    ImGui::SliderFloat3("Translation B", &translationB.x, 0.0f, 960.0f);
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    testMenu->RegisterTest<test::TestTexture2D>("2D Texture");
 }
 
 void onDisplay(void)
 {
-    renderer->Clear();
+    renderer.Clear();
 
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
@@ -88,7 +65,7 @@ void onDisplay(void)
         ImGui::Begin("Test");
 
         currentTest->OnUpdate(0.0f);
-        currentTest->OnRender();
+        currentTest->OnRender(&renderer);
         if (currentTest != testMenu && ImGui::Button("<-"))
         {
             delete currentTest;
@@ -98,8 +75,6 @@ void onDisplay(void)
         currentTest->OnImGuiRender();
         ImGui::End();
     }
-
-    imgui_display_code();
 
     // Rendering
     ImGui::Render();
@@ -114,10 +89,6 @@ void onDisplay(void)
 
 }
 
-void onIdle()
-{
-}
-
 int main(int argc, char** argv)
 {
     // Create GLUT window
@@ -130,7 +101,6 @@ int main(int argc, char** argv)
 
     onInitialize();
 
-    glutIdleFunc(onIdle);
     glutDisplayFunc(onDisplay);
 
     // Setup Dear ImGui context
@@ -154,12 +124,6 @@ int main(int argc, char** argv)
     ImGui_ImplFreeGLUT_Shutdown();
     ImGui::DestroyContext();
 
-    delete ib;
-    delete vb;
-    delete va;
-    delete shader;
-    delete renderer;
-    delete texture;
     delete currentTest;
     if (currentTest != testMenu)
     {

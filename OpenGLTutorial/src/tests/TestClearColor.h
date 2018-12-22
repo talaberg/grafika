@@ -14,7 +14,7 @@ namespace test
         ~TestClearColor();
 
         void OnUpdate(float deltaTime) override;
-        void OnRender() override;
+        void OnRender(Renderer* renderer = nullptr) override;
         void OnImGuiRender() override;
 
     };
