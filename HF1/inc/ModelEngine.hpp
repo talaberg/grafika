@@ -8,7 +8,7 @@ public:
 
     void SetModel(mat4 m) { model = m; }
     mat4 GetModel() { return model; }
-private:
+protected:
     mat4 model;
 
 };
