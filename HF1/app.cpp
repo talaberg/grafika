@@ -1,31 +1,11 @@
 #include "framework.h"
 #include "mymath.h"
 
-// vertex shader in GLSL: It is a Raw string (C++11) since it contains new line characters
-const char * const vertexSource = R"(
-    #version 330                // Shader 3.3
-    precision highp float;        // normal floats, makes no difference on desktop computers
+#include "Renderer.h"
+#include "DrawEngine.hpp"
 
-    uniform mat4 MVP;            // uniform variable, the Model-View-Projection transformation matrix
-    layout(location = 0) in vec2 vp;    // Varying input: vp = vertex position is expected in attrib array 0
+#include <memory>
 
-    void main() {
-        gl_Position = vec4(vp.x, vp.y, 0, 1) * MVP;        // transform vp from modeling space to normalized device space
-    }
-)";
-
-// fragment shader in GLSL
-const char * const fragmentSource = R"(
-    #version 330            // Shader 3.3
-    precision highp float;    // normal floats, makes no difference on desktop computers
-    
-    uniform vec3 color;        // uniform variable, the color of the primitive
-    out vec4 outColor;        // computed color of the current pixel
-
-    void main() {
-        outColor = vec4(0, 1, 0, 1);    // computed color is the color of the primitive
-    }
-)";
 
 const unsigned POINTS_PER_CPS = 4;
 
@@ -67,7 +47,7 @@ public:
 
         // Map Attribute Array 0 to the current bound vertex buffer (vbo[0])
         glEnableVertexAttribArray(0);
-        // Data organization of Attribute Array 0 
+        // Data organization of Attribute Array 0
         glVertexAttribPointer(0,            // Attribute Array 0
             2, GL_FLOAT,  // components/attribute, component type
             GL_FALSE,        // not in fixed point format, do not normalized
@@ -95,7 +75,7 @@ public:
         int location = glGetUniformLocation(gpuProgram.getId(), "color");
         glUniform3f(location, 1.0f, 1.0f, 0.0f); // 3 floats
 
-        float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
+        float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix,
             0, 1, 0, 0,    // row-major!
             0, 0, 1, 0,
             0, 0, 0, 1 };
@@ -110,15 +90,12 @@ public:
     }
 };
 
-GPUProgram gpuProgram; // vertex and fragment shaders
-unsigned int vao;       // virtual world on the GPU
-unsigned int vaoTrack;
-
-Track track;
+std::unique_ptr<DrawEngine> drawEngine;
+std::unique_ptr<ModelObject> mo;
 
 // Initialization, create an OpenGL context
 void onInitialization() {
-    glViewport(0, 0, windowWidth, windowHeight);
+   /* glViewport(0, 0, windowWidth, windowHeight);
 
     glGenVertexArrays(1, &vao);    // get 1 vao id
     glBindVertexArray(vao);        // make it active
@@ -141,19 +118,49 @@ void onInitialization() {
     track.Create(vaoTrack);
 
     // create program for the GPU
-    gpuProgram.Create(vertexSource, fragmentSource, "outColor");
+    gpuProgram.Create(vertexSource, fragmentSource, "outColor");*/
+
+    drawEngine = std::make_unique<DrawEngine>();
+
+    mo = std::make_unique<ModelObject>();
+
+    mo->SetModel(ScaleMatrix({ 1.0f, 1.0f, 1.0f }));
+
+    std::vector<vec4> positions = {
+        vec4(-0.5f, -0.5f, 0.0f, 1.0f),
+        vec4( 0.5f, -0.5f, 0.0f, 1.0f),
+        vec4( 0.5f,  0.5f, 0.0f, 1.0f),
+        vec4(-0.5f,  0.5f, 0.0f, 1.0f)
+    };
+    std::vector<unsigned int> indices = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    std::vector<vec4> positions2;
+    drawEngine->RegisterObject(mo.get(), positions, indices, { 0.1f, 0.1f, 0.8f, 1.0f });
+    for (size_t i = 0; i < positions.size(); i++)
+    {
+        positions[i] = positions[i] * TranslateMatrix({ 0.2f, 0.3f, 0.0f });
+    }
+    drawEngine->RegisterObject(mo.get(), positions, indices, { 0.5f, 0.1f, 0.4f, 1.0f });
+    for (size_t i = 0; i < positions.size(); i++)
+    {
+        positions[i] = positions[i] * TranslateMatrix({ -0.4f, -0.2f, 0.0f });
+        positions[i] = positions[i] * RotationMatrix(45.0f, { -1.0f, 1.0f, 1.0f });
+    }
+    drawEngine->RegisterObject(mo.get(), positions, indices, { 0.7f, 0.7f, 0.2f, 1.0f });
+
 }
 
 // Window has become invalid: Redraw
 void onDisplay() {
-    glClearColor(0, 0, 0, 0);     // background color
-    glClear(GL_COLOR_BUFFER_BIT); // clear frame buffer
-
+    /*
     // Set color to (0, 1, 0) = green
     int location = glGetUniformLocation(gpuProgram.getId(), "color");
     glUniform3f(location, 0.0f, 1.0f, 0.0f); // 3 floats
 
-    float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix, 
+    float MVPtransf[4][4] = { 1, 0, 0, 0,    // MVP matrix,
                               0, 1, 0, 0,    // row-major!
                               0, 0, 1, 0,
                               0, 0, 0, 1 };
@@ -161,12 +168,16 @@ void onDisplay() {
     location = glGetUniformLocation(gpuProgram.getId(), "MVP");    // Get the GPU location of uniform variable MVP
     glUniformMatrix4fv(location, 1, GL_TRUE, &MVPtransf[0][0]);    // Load a 4x4 row-major float matrix to the specified location
 
-    glBindVertexArray(vao);  // Draw call
-    glDrawArrays(GL_TRIANGLES, 0 /*startIdx*/, 3 /*# Elements*/);
+    glBindVertexArray(vao);*/  // Draw call
+    //glDrawArrays(GL_TRIANGLES, 0 /*startIdx*/, 3 /*# Elements*/);
+
+    //track.Draw(vaoTrack, gpuProgram);
+
+    drawEngine->Draw();
 
     glutSwapBuffers(); // exchange buffers for double buffering
 
-    track.Draw(vaoTrack, gpuProgram);
+
 }
 
 // Key of ASCII code pressed
@@ -204,7 +215,7 @@ void onMouse(int button, int state, int pX, int pY) { // pX, pY are the pixel co
     case GLUT_RIGHT_BUTTON:  printf("Right button %s at (%3.2f, %3.2f)\n", buttonStat, cX, cY);  break;
     }
 
-    track.Addpoint(cX, cY);
+//    track.Addpoint(cX, cY);
 }
 
 // Idle event indicating that some time elapsed: do animation here
