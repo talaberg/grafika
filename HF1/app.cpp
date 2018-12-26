@@ -43,15 +43,12 @@ class Track : public ModelObject
 
         SaturatePoints();
 
-        vertexCoords.insert(vertexCoords.begin(), { -1.0f, vertexCoords[0].y, 0.0f, 1.0f });
-        vertexCoords.insert(vertexCoords.begin(), { -1.0f, -1.0f, 0.0f, 1.0f });
         vertexCoords.push_back({ 1.0f, vertexCoords[vertexCoords.size() - 1].y, 0.0f, 1.0f });
-        vertexCoords.push_back({ 1.0f, -1.0f, 0.0f, 1.0f });
+        indices.push_back(indices.size());
 
+        vertexCoords.push_back({ 1.0f, -1.0f, 0.0f, 1.0f });
         indices.push_back(indices.size());
-        indices.push_back(indices.size());
-        indices.push_back(indices.size());
-        indices.push_back(indices.size());
+
         indices.push_back(0);
     }
 
@@ -65,6 +62,11 @@ public:
 
     void Addpoint(float x, float y)
     {
+        if (!curve.cps.size())
+        {
+            curve.AddControlPoint(vec3(-1.0f, -1.0f, 0), (float)(curve.cps.size() + 1));
+            curve.AddControlPoint(vec3(-1.0f, y, 0), (float)(curve.cps.size() + 1));
+        }
         curve.AddControlPoint(vec3(x, y, 0), (float)(curve.cps.size() + 1));
     }
 
