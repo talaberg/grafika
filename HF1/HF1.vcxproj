@@ -48,7 +48,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\Libs\glew-1.13.0\include\;$(SolutionDir)..\..\Libs\freeglut\include\;$(SolutionDir)..\..\Libs\devil-1.7.8\include\;$(SolutionDir)..\..\Libs\glm\;$(SolutionDir)..\..\Common\src\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>inc;inc\glabs;$(SolutionDir)..\..\Libs\glew-1.13.0\include\;$(SolutionDir)..\..\Libs\freeglut\include\;$(SolutionDir)..\..\Libs\devil-1.7.8\include\;$(SolutionDir)..\..\Libs\glm\;$(SolutionDir)..\..\Common\src\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -73,12 +73,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="framework.cpp" />
-    <ClCompile Include="Skeleton.cpp" />
+    <ClCompile Include="src\DrawEngine.cpp" />
+    <ClCompile Include="src\glabs\IndexBuffer.cpp" />
+    <ClCompile Include="src\glabs\Renderer.cpp" />
+    <ClCompile Include="src\framework.cpp" />
+    <ClCompile Include="app.cpp" />
+    <ClCompile Include="src\glabs\Shader.cpp" />
+    <ClCompile Include="src\glabs\VertexArray.cpp" />
+    <ClCompile Include="src\glabs\VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="mymath.h" />
+    <ClInclude Include="inc\DrawEngine.hpp" />
+    <ClInclude Include="inc\framework.h" />
+    <ClInclude Include="inc\glabs\Renderer.h" />
+    <ClInclude Include="inc\mymath.h" />
+    <ClInclude Include="inc\glabs\Shader.h" />
+    <ClInclude Include="inc\glabs\IndexBuffer.h" />
+    <ClInclude Include="inc\glabs\VertexArray.h" />
+    <ClInclude Include="inc\glabs\VertexBuffer.h" />
+    <ClInclude Include="inc\glabs\VertexBufferLayout.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="inc\ModelEngine.hpp" />
+    <None Include="res\shaders\Tutorial.shader" />
+    <None Include="res\shaders\Basic.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

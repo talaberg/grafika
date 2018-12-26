@@ -7,7 +7,7 @@ using namespace std;
 
 class CatmullRom {
 public:
-    vector<vec3> cps;        // control points 
+    vector<vec3> cps;        // control points
     vector<float>  ts;    // parameter (knot) values
 private:
     vec3 Hermite(vec3 p0, vec3 v0, float t0,
@@ -60,14 +60,14 @@ public:
                 v0 = v1;
             }
 
-            //throw std::exception("Invalid t operator!"); TODO
+            //throw std::exception("Invalid t operator!");
         }
         else if (cps.size() == 1)
         {
             return cps[0];
         }
 
-        //throw std::exception("No control points!"); TODO
+        //throw std::exception("No control points!");
     }
 };
 
